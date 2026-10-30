@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ular Tangga LDR</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--bg:#f3ead2;--ink:#24352b;--card:#fffaf0;--muted:#6b7a6c;--g1:#6f9a62;--g2:#5f8a55;--river:#a9cfe8;--gold:#f2c14e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1b2a22;--ink:#f1ead6;--card:#2a3b31;--muted:#a5b3a6}}
+:root[data-theme="dark"]{--bg:#1b2a22;--ink:#f1ead6;--card:#2a3b31;--muted:#a5b3a6}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Fredoka',system-ui,sans-serif;min-height:100vh}
+main{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:1.6rem;margin:0 0 4px}
+.sub,.note{color:var(--muted);margin:0 0 12px}
+.card{background:var(--card);border-radius:16px;padding:16px}
+#home{max-width:440px;margin:20px auto;display:grid;gap:12px}
+label{display:grid;gap:4px;font-weight:600}
+input[type=text],textarea,select{font:inherit;padding:10px 12px;border-radius:10px;border:2px solid var(--g2);background:var(--bg);color:var(--ink);width:100%}
+.seg{display:flex;gap:8px}.seg label{flex:1;display:flex;gap:6px;align-items:center;padding:10px;border-radius:12px;border:2px solid var(--g2);cursor:pointer}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:12px 18px;background:var(--g2);color:#fff;cursor:pointer}
+button.alt{background:var(--muted)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+[hidden]{display:none!important}
+#err{color:#c0392b;font-weight:600;margin:0}
+#game{display:none}
+.bar{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap;margin-bottom:10px}
+.pl{flex:1;min-width:140px;padding:8px 12px;border-radius:14px;background:var(--card);border:3px solid transparent}
+.pl.on{border-color:var(--gold)}
+.pl b{display:flex;align-items:center;gap:8px}
+.pl small{color:var(--muted)}
+.dot{width:16px;height:16px;border-radius:50%;flex:none}
+#dice{font-size:2.4rem;line-height:1;min-width:64px;background:var(--card);color:var(--ink);padding:6px 10px}
+#msg{flex-basis:100%;margin:0;font-weight:600}
+#room{margin:0 0 8px;font-size:.9rem;color:var(--muted)}
+#boardWrap{max-width:1000px;margin:0 auto;position:relative;background:var(--river);border:6px solid var(--fr,#e0c675);border-radius:14px;padding:6px}
+#board{display:grid;gap:3px;position:relative}
+.c{aspect-ratio:1;border-radius:8px;position:relative;font-size:.6rem;color:#e8f3df;padding:1px 3px;min-height:0;overflow:hidden}
+.c.q::after{content:"";position:absolute;right:5px;bottom:5px;width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.c.end{background:#c9a227!important;color:#2a2200;font-weight:700}
+.dc{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:1.1rem;opacity:.35}
+.ic{position:absolute;left:50%;top:58%;transform:translate(-50%,-50%);font-size:1.1rem}
+.c.sp{box-shadow:inset 0 0 0 2px var(--gold)}
+.c.tb{box-shadow:inset 0 0 0 2px #7fc4ee}
+.tk{position:absolute;inset:0;display:flex;flex-wrap:wrap;align-content:center;justify-content:center;gap:2px;z-index:3}
+.tk i{width:40%;max-width:24px;aspect-ratio:1;border-radius:50%;border:3px solid #fff;display:block}
+#ov{position:absolute;inset:6px;pointer-events:none;z-index:2;width:calc(100% - 12px);height:calc(100% - 12px)}
+#start{margin-top:8px;font-size:.9rem;color:var(--muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#start i{width:16px;height:16px;border-radius:50%;border:3px solid #fff;display:inline-block}
+#log{margin:10px 0;padding-left:18px;color:var(--muted);font-size:.9rem}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+dialog{border:0;border-radius:20px;padding:24px;max-width:min(460px,92vw);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.55)}
+dialog h2{margin:0 0 6px;font-size:1.1rem}
+.qt{font-size:1.3rem;font-weight:600;margin:0 0 18px;line-height:1.35}
+.ck{display:flex;gap:8px;align-items:center;font-weight:400}
+@media (min-width:900px){
+main{max-width:1600px;padding:10px 20px}
+h1{font-size:1.3rem}.sub{margin-bottom:6px}
+#gl{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+#gl>*{grid-column:2;margin-top:0}
+#gl>#boardWrap{grid-column:1;grid-row:1/9;width:100%;max-width:calc((100vh - 110px)*2);margin:0}
+#bar{flex-direction:column;flex-wrap:nowrap;margin:0}
+#bar .pl{flex:none;min-width:0}
+#bar #msg{flex-basis:auto}
+#dice{font-size:3.6rem;align-self:stretch}
+.c{font-size:.75rem}
+.ic{font-size:1.5rem}
+.dc{font-size:1.2rem}
+.tk i{max-width:30px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main>
+<h1>Ular Tangga LDR</h1>
+<p class="sub">Gantian lempar dadu, jawab pertanyaan di kotak kuning, dan sampai duluan ke 200.</p>
+
+<section id="home" class="card">
+  <div class="seg">
+    <label><input type="radio" name="m" value="local" checked>Satu layar</label>
+    <label><input type="radio" name="m" value="online">Dua HP</label>
+  </div>
+  <div id="hl" style="display:grid;gap:10px">
+    <p class="note">Satu orang buka halaman ini lalu share screen lewat VC. Pemain 3 dan 4 boleh dikosongkan.</p>
+    <label>Pemain 1<input type="text" id="n0" value="Aku" maxlength="14"></label>
+    <label>Pemain 2<input type="text" id="n1" value="Kamu" maxlength="14"></label>
+    <label>Pemain 3<input type="text" id="n2" maxlength="14"></label>
+    <label>Pemain 4<input type="text" id="n3" maxlength="14"></label>
+    <button id="cont" type="button" class="alt" hidden>Lanjutkan permainan terakhir</button>
+  </div>
+  <div id="ho" hidden style="display:grid;gap:10px">
+    <p class="note" id="onote">Kalian berdua buka link ini di HP masing-masing, lalu masukkan kode ruang yang sama.</p>
+    <label>Kode ruang<input type="text" id="code" placeholder="contoh: RINDU" maxlength="12"></label>
+    <label>Namamu<input type="text" id="myn" value="Aku" maxlength="14"></label>
+  </div>
+  <button id="go" type="button">Mulai main</button>
+  <p id="err"></p>
+</section>
+
+<section id="game">
+  <div id="gl">
+  <p id="room"></p>
+  <div class="bar" id="bar"></div>
+  <div id="boardWrap"><div id="board"></div><svg id="ov"></svg></div>
+  <div id="start"></div>
+  <p class="note" style="margin:8px 0 0;font-size:.85rem">🟡 pertanyaan · 🎁 kotak kejutan · 💬 tanya balik</p>
+  <ul id="log"></ul>
+  <div class="row">
+    <button id="setb" type="button" class="alt">Pengaturan</button>
+    <button id="reset" type="button" class="alt">Main ulang</button>
+    <button id="exit" type="button" class="alt">Keluar</button>
+  </div>
+  </div>
+</section>
+
+<dialog id="dlg">
+  <h2 id="who"></h2>
+  <p class="note" id="cat"></p>
+  <p class="qt" id="qt"></p>
+  <p class="note" id="ex"></p>
+  <button id="done" type="button">Sudah dijawab</button>
+</dialog>
+
+<dialog id="set">
+  <h2>Pengaturan</h2>
+  <p class="note">Pilih jenis pertanyaan yang boleh muncul.</p>
+  <div id="cats" style="display:grid;gap:8px;margin-bottom:14px"></div>
+  <label>Tambah pertanyaan buatan kalian<textarea id="newq" rows="2" maxlength="160"></textarea></label>
+  <p class="note" id="qn"></p>
+  <label>Tema papan<select id="theme"></select></label>
+  <label class="ck" style="margin-top:10px"><input type="checkbox" id="snd" checked>Efek suara</label>
+  <div class="row" style="margin-top:14px"><button id="addq" type="button">Tambah</button><button id="closeset" type="button" class="alt">Tutup</button></div>
+</dialog>
+</main>
+
+<script>
+const END=200,COL=["#e4572e","#2e86ab","#8e5ea2","#d6537f"];
+const SNAKES={26:9,38:21,52:37,63:46,77:62,88:71,99:84,107:91,123:106,135:119,149:131,171:155,186:168,198:182},LADDERS={3:17,12:28,33:47,57:72,67:83,97:112,118:133,129:143,153:169,164:180,175:190,181:196};
+const SURP=[10,14,24,30,35,42,54,60,75,82,90,95,105,113,122,132,140,147,154,163,172,179,185,191],TB=[5,20,25,40,45,50,64,70,80,92,101,108,116,125,137,145,151,158,166,174,184,187,195];
+const GIFTS=["Minta pasanganmu mengirim voice note manis sekarang.","Pasanganmu harus memujimu tiga kali tanpa jeda.","Kamu boleh minta satu permintaan kecil dari pasanganmu.","Pasanganmu menyanyikan satu lagu untukmu, boleh fals.","Pasanganmu menyebut tiga hal yang dia suka dari kamu.","Minta pasanganmu mengirim selfie terbarunya sekarang.","Pasanganmu menceritakan satu hal yang dia syukuri tentang kamu minggu ini.","Pasanganmu berjanji merencanakan satu kencan online berikutnya."];
+const THEMES={hutan:{n:"Hutan",g1:"#6f9a62",g2:"#5f8a55",bg:"#a9cfe8",fr:"#e0c675",dc:["🌲","⛰️","🌿"]},laut:{n:"Laut",g1:"#4aa3c8",g2:"#3b8fb5",bg:"#efe0b0",fr:"#f0b27a",dc:["🐚","🌊","🐠"]},malam:{n:"Malam berbintang",g1:"#3b3f7a",g2:"#2f3366",bg:"#14162e",fr:"#6b6fb0",dc:["⭐","🌙","✨"]}};
+let drawnTheme="",peer=null,conn=null,p2p=false,linkMsg="";
+const land=(P,e)=>LADDERS[e]?(P.l++,{to:LADDERS[e],kind:"l"}):SNAKES[e]?(P.s++,{to:SNAKES[e],kind:"s"}):{to:e,kind:""};
+const QS=[
+["Obrolan dalam","Apakah aku sudah jadi pendengar yang baik buat kamu?"],
+["Obrolan dalam","Apa hal kecil dariku yang paling bikin kamu tenang?"],
+["Obrolan dalam","Kapan kamu paling merasa dekat sama aku, padahal kita jauh?"],
+["Obrolan dalam","Apa yang paling kamu takutkan dari LDR ini?"],
+["Obrolan dalam","Apa satu hal yang ingin kamu ubah dari cara kita berkomunikasi?"],
+["Obrolan dalam","Momen apa yang bikin kamu yakin sama aku?"],
+["Obrolan dalam","Apa mimpi kita berdua yang belum pernah kita bicarakan?"],
+["Obrolan dalam","Kapan terakhir kamu merasa kesepian, dan apa yang kamu butuhkan saat itu?"],
+["Kenangan","Ceritakan kesan pertamamu waktu kita ketemu."],
+["Kenangan","Apa kencan kita yang paling kamu ingat?"],
+["Kenangan","Lagu apa yang selalu bikin kamu ingat aku?"],
+["Kenangan","Apa kebiasaanku yang diam-diam kamu suka?"],
+["Rencana","Kalau besok bisa ketemu, kita langsung ngapain?"],
+["Rencana","Kota mana yang ingin kamu datangi bareng aku?"],
+["Rencana","Kita tinggal serumah nanti, aturan pertama yang kamu mau apa?"],
+["Rencana","Makanan apa yang mau kita masak bareng pertama kali?"],
+["Tantangan","Tiru gaya bicaraku selama 30 detik."],
+["Tantangan","Nyanyikan satu lagu favoritmu, boleh fals."],
+["Tantangan","Tunjukkan isi kulkasmu lewat kamera."],
+["Tantangan","Kirim foto terlucu dirimu di galeri sekarang."],
+["Tantangan","Kasih tiga pujian ke pasanganmu tanpa mikir lama."],
+["Tantangan","Gambar wajah pasanganmu dalam 30 detik, lalu tunjukkan."],
+["Ringan","Panggilan sayang apa yang paling kamu suka dariku?"],
+["Ringan","Kalau aku hewan, aku hewan apa menurutmu?"],
+["Ringan","Tebak: pesanan kopi atau minuman favoritku apa?"],
+["Ringan","Apa hal paling random yang kamu pikirkan tentang aku hari ini?"]
+];
+const ADD=(c,a)=>a.forEach(q=>QS.push([c,q]));
+ADD("Rasa & luka",["Apa yang paling bikin kamu merasa belum cukup baik, dan kapan itu biasanya muncul?","Kapan terakhir kamu menangis, dan apa penyebabnya?","Luka masa lalu apa yang masih memengaruhi caramu mencintai?","Hal apa yang sulit kamu ceritakan ke orang lain tapi ingin kamu ceritakan padaku?","Apa yang bikin kamu merasa insecure dalam hubungan kita?","Saat kamu marah, apa yang sebenarnya kamu butuhkan dariku?","Apa kekhawatiran tentang dirimu sendiri yang jarang kamu bilang?","Apa yang bikin kamu paling lelah belakangan ini?","Kapan kamu merasa paling dimengerti olehku?","Apa yang kamu pelajari dari hubungan sebelumnya?","Apa yang ingin kamu maafkan dari dirimu sendiri?","Apa masa terberat dalam hidupmu, dan siapa yang menemanimu saat itu?"]);
+ADD("Komunikasi",["Cara aku menyampaikan sesuatu yang mana yang kadang bikin kamu terluka?","Kamu lebih suka bahas masalah langsung atau setelah tenang? Kenapa?","Seberapa sering kamu menahan diri supaya aku nggak sedih?","Apa yang bikin kamu merasa diabaikan saat kita LDR?","Seberapa sering berkabar yang paling ideal buatmu?","Kapan kamu merasa aku kurang hadir, padahal kita lagi VC?","Kalimat apa yang ingin kamu dengar dariku lebih sering?","Cara minta maaf yang paling kamu terima itu seperti apa?","Topik apa yang selama ini kita hindari?","Kalau kita bertengkar, apa yang paling kamu harapkan dariku?","Apa yang bisa aku lakukan supaya kamu lebih terbuka?","Hal apa dari cara kita berkomunikasi yang paling kamu syukuri?"]);
+ADD("Cinta & kedekatan",["Kamu paling merasa dicintai lewat apa: kata-kata, waktu bersama, sentuhan, hadiah, atau bantuan?","Apa satu hal yang bikin kamu jatuh cinta padaku?","Apa yang paling kamu rindukan dari kita saat jauh?","Kapan kamu merasa paling aman bersamaku?","Apa yang membuatmu bangga padaku?","Apa yang ingin kamu lakukan lebih sering untukku?","Seperti apa hari yang sempurna bersamaku menurutmu?","Apa yang kamu pelajari tentang dirimu sejak bersamaku?","Kapan kamu sadar kamu serius denganku?","Apa hal paling romantis yang pernah aku lakukan menurutmu?","Apa yang masih ingin kamu tahu tentang aku?","Apa arti rumah bagimu, dan apakah aku sudah terasa seperti rumah?"]);
+ADD("Masa depan",["Lima tahun lagi, kamu ingin kita ada di mana?","Komitmen atau pernikahan yang ideal menurutmu seperti apa?","Kapan menurutmu LDR ini bisa berakhir, dan apa syaratnya?","Siapa yang sebaiknya pindah kota, dan bagaimana cara kita memutuskannya?","Kamu ingin punya anak? Kalau iya, kapan dan berapa?","Bagaimana kita mengatur keuangan kalau nanti hidup bersama?","Apa mimpi kariermu, dan bagaimana aku bisa mendukungnya?","Apa yang paling kamu takutkan tentang masa depan kita?","Tradisi apa yang ingin kita bangun berdua?","Apa yang perlu kita siapkan mulai sekarang untuk bertemu lagi?","Bagaimana kamu membayangkan hubungan kita dengan keluarga masing-masing?","Janji kecil apa yang ingin kamu buat untuk kita?"]);
+ADD("Nilai hidup",["Apa hal yang paling kamu pegang dalam hidup dan nggak mau kamu kompromikan?","Apa arti sukses bagimu?","Apa penyesalan terbesarmu sejauh ini?","Kalau uang bukan masalah, kamu ingin hidup seperti apa?","Apa yang kamu pelajari dari keluargamu tentang cinta?","Bagaimana kamu memandang kepercayaan dan kesetiaan?","Apa yang membuat hidupmu terasa bermakna?","Apa yang ingin orang ingat tentangmu?","Kebiasaan apa dari dirimu yang ingin kamu ubah?","Seberapa penting keyakinan atau agama dalam hubungan kita?"]);
+ADD("Masa kecil & keluarga",["Seperti apa masa kecilmu, dan apa kenangan yang paling kamu sayangi?","Nilai apa dari orang tuamu yang ingin kamu bawa ke keluarga kita?","Apa yang ingin kamu lakukan berbeda dari cara orang tuamu membesarkanmu?","Siapa orang yang paling berpengaruh dalam hidupmu, dan kenapa?","Apa cita-cita kecilmu, dan apa yang terjadi dengan cita-cita itu?","Hal apa dari masa kecilmu yang masih kamu rindukan?","Bagaimana keluargamu menyelesaikan pertengkaran, dan apa pengaruhnya padamu?","Tradisi keluarga apa yang paling kamu sukai?","Apa yang ingin kamu ceritakan ke anak kita nanti tentang masa kecilmu?","Siapa di keluargamu yang paling mirip denganmu?"]);
+ADD("Keseharian",["Bagian hari apa yang paling kamu tunggu, dan bagian mana yang paling melelahkan?","Apa yang kamu lakukan untuk menenangkan diri saat stres?","Ritual pagi atau malam apa yang membuatmu merasa baik?","Kebiasaan apa yang ingin kamu bangun bersamaku?","Apa yang bikin kamu paling semangat akhir-akhir ini?","Apa yang kamu butuhkan supaya hari-harimu terasa lebih ringan?","Seberapa sering kamu butuh waktu sendiri, dan bagaimana aku bisa menghargainya?","Kebiasaanmu apa yang paling bikin orang lain heran?","Bagaimana kamu ingin kita merayakan hari-hari kecil, bukan hanya tanggal penting?","Ceritakan satu hal tentang harimu kemarin yang belum sempat kamu ceritakan padaku."]);
+ADD("Kalau saja",["Kalau kita bisa pindah ke kota mana pun tanpa memikirkan pekerjaan, kamu pilih mana?","Kalau kamu bisa kembali ke satu hari dalam hidupmu, hari yang mana?","Kalau kita punya satu bulan bebas bersama, apa yang kita lakukan?","Kalau kamu bisa menghapus satu ketakutan dalam dirimu, ketakutan apa?","Kalau kamu bisa memberi satu nasihat ke dirimu lima tahun lalu, apa isinya?","Kalau LDR ini punya satu pelajaran terbesar, apa itu?","Kalau kita menulis buku tentang hubungan kita, apa judulnya?","Kalau kamu bisa minta satu kemampuan supaya LDR lebih mudah, kemampuan apa?","Kalau kita bertengkar hebat, apa yang ingin kamu ingat tentang kita?","Kalau kamu bisa membawa satu hal dari tempatku ke tempatmu, apa itu?"]);
+ADD("Obrolan dalam",["Apa yang membuatmu bertahan di hari yang berat?","Kapan kamu merasa paling jujur pada dirimu sendiri?","Apa yang kamu harap aku mengerti tanpa kamu perlu menjelaskan?","Bagian mana dari dirimu yang kamu harap aku lebih kenal?","Apa yang kamu rasakan saat kita lama nggak berkabar?","Apa yang membuatmu merasa hubungan ini layak diperjuangkan?","Bagaimana kamu menjaga diri supaya nggak kelelahan secara emosional?","Apa ketakutan terbesarmu soal kehilangan aku?","Hal apa yang kamu lakukan hanya karena ingin membuatku bahagia?","Apa yang masih membuatmu ragu soal kita?"]);
+ADD("Kenangan",["Kapan pertama kali kamu merasa kangen padaku?","Percakapan kita yang mana yang paling berkesan sampai sekarang?","Hadiah atau kejutan apa dariku yang paling kamu ingat?","Tempat atau hal kecil apa yang langsung mengingatkanmu padaku?","Kapan kita tertawa paling keras bersama?","Momen mana dari kita yang ingin kamu ulang kalau bisa?"]);
+ADD("Komunikasi",["Bagaimana kamu ingin kita mengatasi salah paham lewat chat?","Apa tanda kamu sedang butuh ditemani tapi nggak bilang?","Apa yang bikin kamu lega setelah kita bicarakan?","Apa yang bisa kita lakukan supaya VC terasa lebih hangat?","Bagaimana cara kamu ingin aku menyemangatimu saat kamu sedih?","Apa yang ingin kamu ubah dari jadwal kita ngobrol?"]);
+ADD("Rencana",["Apa satu hal kecil yang bisa kita rencanakan minggu ini supaya terasa dekat?","Hal apa yang ingin kita coba sebelum bertemu?","Seperti apa rencana pertemuan kita berikutnya menurutmu?","Kebiasaan baru apa yang ingin kita mulai bersama secara online?","Target bersama apa yang ingin kita capai tahun ini?","Bagaimana kita merayakan saat LDR ini berakhir?"]);
+ADD("Tantangan",["Kirim emoji yang menggambarkan perasaanmu hari ini, lalu jelaskan.","Lakukan peregangan 30 detik bersama pasanganmu lewat kamera.","Tulis tiga kata yang menggambarkan pasanganmu, lalu jelaskan alasannya.","Ceritakan hal paling memalukan yang pernah kamu alami.","Pilih satu lagu untuk diputar berdua sekarang.","Beri pasanganmu julukan baru dan jelaskan alasannya."]);
+ADD("Tantangan",["Kirim voice note berisi tiga hal yang kamu syukuri dari pasanganmu.","Tulis satu surat pendek untuk pasanganmu dan bacakan sekarang.","Tutup mata, lalu deskripsikan wajah pasanganmu dari ingatan.","Ceritakan satu rahasia kecil yang belum pernah kamu bilang."]);
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const hasQ=n=>n>0&&n<END&&(n%5===1||n%5===3)&&!SNAKES[n]&&!LADDERS[n]&&!SURP.includes(n)&&!TB.includes(n);
+let S=null,mode="local",db=null,uid=null,ref=null,unsub=null,code="",cols=11,disp=[],lastMv=-1,ani=false,rolling=false,muted=false,AC;
+
+/* suara */
+function tone(f,d,t,w){if(muted)return;try{AC=AC||new(window.AudioContext||window.webkitAudioContext)();const o=AC.createOscillator(),g=AC.createGain(),s=AC.currentTime+(w||0);o.type=t||"sine";o.frequency.value=f;g.gain.setValueAtTime(.12,s);g.gain.exponentialRampToValueAtTime(.001,s+d);o.connect(g);g.connect(AC.destination);o.start(s);o.stop(s+d)}catch(e){}}
+const seq=(a,d,t)=>a.forEach((f,i)=>tone(f,d,t,i*.1));
+const SFX={step:()=>tone(520,.06),up:()=>seq([523,659,784,1047],.12,"triangle"),down:()=>seq([392,330,262,196],.14,"sawtooth"),q:()=>seq([880,1175],.18),win:()=>seq([523,659,784,1047,784,1047],.2,"triangle")};
+
+/* state */
+function newState(names){return{players:names.map(n=>({n,p:0,uid:null,q:0,s:0,l:0})),turn:0,again:false,pend:null,over:-1,mv:null,mvId:0,used:[],extra:[],cats:{},theme:"hutan",log:[]}}
+const all=()=>QS.concat((S.extra||[]).map(x=>["Buatan kita",x]));
+function pick(){
+  const A=all(),ok=i=>S.cats[A[i][0]]!==false;
+  let pool=A.map((_,i)=>i).filter(i=>ok(i)&&!S.used.includes(i));
+  if(!pool.length){S.used=[];pool=A.map((_,i)=>i).filter(ok)}
+  if(!pool.length)return -1;
+  const i=pool[Math.floor(Math.random()*pool.length)];S.used.push(i);return i;
+}
+function addLog(t){S.log=(S.log||[]).concat(t).slice(-5)}
+const canAct=()=>mode==="local"||S.players[S.turn].uid===uid;
+async function save(){
+  try{
+    if(p2p){if(conn&&conn.open)conn.send(JSON.parse(JSON.stringify(S)));localStorage.setItem("ldr-p2p-"+code,JSON.stringify(S))}else if(mode==="online")await ref.set(S);
+    else localStorage.setItem("ldr-ular",JSON.stringify(S));
+  }catch(e){$("err").textContent="Perubahan gagal disimpan."}
+}
+
+/* papan */
+function xy(n){const i=n-1,rows=Math.ceil(END/cols);let r=Math.floor(i/cols),c=i%cols;if(r%2)c=cols-1-c;return{c,r:rows-1-r}}
+function draw(){
+  cols=innerWidth<700?10:20;
+  const rows=Math.ceil(END/cols),b=$("board"),T=THEMES[S.theme]||THEMES.hutan,WR=$("boardWrap");drawnTheme=S.theme||"hutan";WR.style.setProperty("--g1",T.g1);WR.style.setProperty("--g2",T.g2);WR.style.setProperty("--river",T.bg);WR.style.setProperty("--fr",T.fr);
+  b.style.gridTemplateColumns="repeat("+cols+",1fr)";b.innerHTML="";
+  for(let n=1;n<=END;n++){
+    const {c,r}=xy(n),d=document.createElement("div");
+    d.className="c"+(hasQ(n)?" q":"")+(n===END?" end":"")+(SURP.includes(n)?" sp":"")+(TB.includes(n)?" tb":"");
+    d.style.gridColumn=c+1;d.style.gridRow=r+1;d.style.background=(c+r)%2?"var(--g1)":"var(--g2)";
+    d.id="c"+n;
+    const dc=!hasQ(n)&&!SNAKES[n]&&!LADDERS[n]&&!SURP.includes(n)&&!TB.includes(n)?(n%7===2?T.dc[0]:n%11===5?T.dc[1]:n%13===6?T.dc[2]:""):"";
+    d.innerHTML=(n===END?"Finish":n)+(dc?'<span class="dc">'+dc+"</span>":"")+(SURP.includes(n)?'<span class="ic">🎁</span>':TB.includes(n)?'<span class="ic">💬</span>':"");
+    b.appendChild(d);
+  }
+  const s=$("ov");s.setAttribute("viewBox","0 0 "+cols*100+" "+rows*100);s.setAttribute("preserveAspectRatio","none");
+  const P=n=>{const p=xy(n);return[p.c*100+50,p.r*100+50]};let h="";
+  for(const a in LADDERS){
+    const [x1,y1]=P(+a),[x2,y2]=P(LADDERS[a]),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L*11,ny=dx/L*11;
+    h+=`<g stroke="#fff" stroke-opacity=".9" stroke-width="4" stroke-linecap="round"><line x1="${x1+nx}" y1="${y1+ny}" x2="${x2+nx}" y2="${y2+ny}"/><line x1="${x1-nx}" y1="${y1-ny}" x2="${x2-nx}" y2="${y2-ny}"/>`;
+    const k=Math.max(2,Math.floor(L/32));
+    for(let i=1;i<k;i++){const t=i/k,px=x1+dx*t,py=y1+dy*t;h+=`<line x1="${px+nx}" y1="${py+ny}" x2="${px-nx}" y2="${py-ny}" stroke-width="3"/>`}
+    h+="</g>";
+  }
+  for(const a in SNAKES){
+    const [x1,y1]=P(+a),[x2,y2]=P(SNAKES[a]),dx=x2-x1,dy=y2-y1,L=Math.hypot(dx,dy),nx=-dy/L*28,ny=dx/L*28;
+    h+=`<path d="M${x1} ${y1} Q${x1+dx*.25+nx} ${y1+dy*.25+ny} ${x1+dx*.5} ${y1+dy*.5} T${x2} ${y2}" fill="none" stroke="#8c3b2e" stroke-width="6" stroke-linecap="round"/><circle cx="${x1}" cy="${y1}" r="9" fill="#8c3b2e"/><circle cx="${x1-4}" cy="${y1-3}" r="3" fill="#fff"/><circle cx="${x1+4}" cy="${y1-3}" r="3" fill="#fff"/>`;
+  }
+  s.innerHTML=h;tokens();
+}
+function tokens(){
+  document.querySelectorAll(".tk").forEach(e=>e.remove());
+  const st=$("start");st.innerHTML="";let any=false;
+  S.players.forEach((pl,i)=>{
+    const p=disp[i]||0,t=document.createElement("i");t.style.background=COL[i];
+    if(p<1){st.appendChild(t);st.append(pl.n+" ");any=true}
+    else{let w=document.querySelector("#c"+p+" .tk");if(!w){w=document.createElement("div");w.className="tk";$("c"+p).appendChild(w)}w.appendChild(t)}
+  });
+  if(any)st.append("belum mulai");
+}
+
+/* tampilan */
+function ui(){
+  const bar=$("bar");
+  bar.innerHTML=S.players.map((p,i)=>`<div class="pl${S.turn===i&&S.over<0?" on":""}"><b><span class="dot" style="background:${COL[i]}"></span>${esc(p.n)}${mode==="online"&&!p.uid?" (menunggu)":""}</b><small>Kotak ${disp[i]||0} · ❓${p.q} 🪜${p.l} 🐍${p.s}</small></div>`).join("")+'<button id="dice" aria-label="Lempar dadu">'+($("dice")?$("dice").textContent:"🎲")+'</button><p id="msg"></p>';
+  $("dice").onclick=roll;
+  $("dice").disabled=ani||rolling||!!S.pend||S.over>=0||!canAct();
+  const cur=S.players[S.turn];
+  $("msg").textContent=S.over>=0?"🎉 "+S.players[S.over].n+" sampai finish! Yang kalah traktir lewat ojol ya.":S.pend?cur.n+" sedang menjawab pertanyaan":canAct()?"Giliran "+cur.n+(S.again?", lempar lagi (dadu 6)":", lempar dadu")+(cur.p>0&&END-cur.p<=6?" · butuh dadu "+(END-cur.p)+" untuk finish":""):"Menunggu "+cur.n+" melempar dadu";
+  $("log").innerHTML=(S.log||[]).map(l=>"<li>"+esc(l)+"</li>").join("");
+  $("room").textContent=mode==="online"?"Kode ruang: "+code+(S.players.some(p=>!p.uid)?" · minta pasangan masuk dengan kode ini":"")+(linkMsg?" · "+linkMsg:""):"";
+}
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function sync(){
+  if(ani)return;
+  if($("game").style.display==="block"&&drawnTheme!==(S.theme||"hutan"))draw();
+  disp=S.players.map(p=>p.p);tokens();ui();
+  const d=$("dlg");
+  if(S.pend&&S.over<0){
+    const pd=S.pend,A=all(),g=pd.k==="gift",q=g?["🎁 Kotak kejutan",pd.txt]:(A[pd.i]||["","?"]);
+    $("who").textContent=S.players[pd.who].n+(g?" dapat hadiah!":" menjawab");$("cat").textContent=(pd.k==="tb"?"💬 Tanya balik · ":"")+q[0];$("qt").textContent=q[1];
+    $("ex").textContent=pd.k==="tb"?"Setelah menjawab, tanyakan satu pertanyaan lanjutan ke pasanganmu, lalu dia juga menjawab.":"";$("done").textContent=g?"Siap!":"Sudah dijawab";
+    if(!d.open){d.showModal();SFX.q()}
+  }else if(d.open)d.close();
+}
+async function anim(mv){
+  ani=true;const f=["⚀","⚁","⚂","⚃","⚄","⚅"];
+  ui();$("dice").textContent=f[mv.v-1];
+  for(const p of mv.path){disp[mv.w]=p;tokens();SFX.step();await sleep(200)}
+  if(mv.kind){mv.kind==="l"?SFX.up():SFX.down();await sleep(450);disp[mv.w]=mv.to;tokens();await sleep(250)}
+  if(mv.x){await sleep(300);SFX.q();for(const p of mv.x.path){disp[mv.w]=p;tokens();SFX.step();await sleep(200)}if(mv.x.kind){mv.x.kind==="l"?SFX.up():SFX.down();await sleep(450);disp[mv.w]=mv.x.to;tokens();await sleep(250)}}
+  ani=false;
+  if(S.over>=0)SFX.win();
+}
+async function apply(ns,first){
+  if(p2p)try{localStorage.setItem("ldr-p2p-"+code,JSON.stringify(ns))}catch(e){}
+  S=ns;
+  if(first){lastMv=S.mvId;disp=S.players.map(p=>p.p)}
+  else if(S.mvId>lastMv){lastMv=S.mvId;if(S.mv&&!ani)await anim(S.mv)}
+  sync();
+}
+
+/* aksi */
+async function roll(){
+  if(ani||rolling||S.pend||S.over>=0||!canAct())return;
+  rolling=true;ui();
+  const f=["⚀","⚁","⚂","⚃","⚄","⚅"];
+  for(let k=0;k<8;k++){$("dice").textContent=f[Math.floor(Math.random()*6)];tone(300+k*30,.04);await sleep(70)}
+  const v=1+Math.floor(Math.random()*6),t=S.turn,P=S.players[t],from=P.p,path=[];
+  if(from+v<=END)for(let k=1;k<=v;k++)path.push(from+k);
+  let end=path.length?path[path.length-1]:from,txt=P.n+" dapat "+v+(from+v>END?" (kelebihan, butuh dadu "+(END-from)+" untuk finish, diam di kotak "+from+")":"");
+  const a=land(P,end),kind=a.kind;end=a.to;
+  if(kind==="l")txt+=", naik tangga ke "+end;else if(kind==="s")txt+=", digigit ular, turun ke "+end;
+  let x=null,pend=null;
+  if(path.length&&end<END&&SURP.includes(end)){
+    const r=Math.random();
+    if(r<.45){pend={who:t,k:"gift",txt:GIFTS[Math.floor(Math.random()*GIFTS.length)]};txt+=", dapat kotak kejutan 🎁"}
+    else{
+      const d=r<.75?2+Math.floor(Math.random()*4):-(1+Math.floor(Math.random()*4)),tg=Math.max(1,Math.min(END-1,end+d)),xp=[];
+      for(let p=end;p!==tg;p+=d>0?1:-1)xp.push(p+(d>0?1:-1));
+      const b=land(P,tg);x={path:xp,to:b.to,kind:b.kind};end=b.to;
+      txt+=", kotak kejutan: "+(d>0?"maju "+d:"mundur "+(-d))+" kotak"+(b.kind==="l"?" lalu naik tangga":b.kind==="s"?" lalu digigit ular":"");
+    }
+  }
+  P.p=end;S.mvId++;S.mv={w:t,path,to:a.to,kind,v,x};S.again=v===6&&end<END&&path.length>0;
+  const qk=path.length&&end<END&&!pend?(TB.includes(end)?"tb":hasQ(end)?"q":""):"",qi=qk?pick():-1;
+  if(end>=END){S.over=t;txt+=" dan menang!"}
+  else if(pend)S.pend=pend;
+  else if(qi>=0)S.pend={who:t,i:qi,k:qk};
+  else if(!S.again)S.turn=(t+1)%S.players.length;
+  addLog(txt);
+  await save();rolling=false;
+  await apply(S);
+}
+async function answered(){
+  const w=S.pend.who;if(S.pend.k!=="gift")S.players[w].q++;S.pend=null;
+  if(!S.again)S.turn=(w+1)%S.players.length;
+  addLog(S.players[w].n+" sudah menjawab");
+  $("dlg").close();await save();sync();
+}
+async function resetGame(){
+  S.players.forEach(p=>{p.p=0;p.q=p.s=p.l=0});
+  S.turn=0;S.again=false;S.pend=null;S.over=-1;S.mv=null;S.mvId++;S.log=["Permainan dimulai ulang"];
+  await save();lastMv=S.mvId;sync();
+}
+
+/* masuk / keluar */
+function show(){
+  $("home").style.display="none";$("game").style.display="block";
+  $("err").textContent="";draw();
+}
+async function startLocal(){
+  const names=[0,1,2,3].map(i=>$("n"+i).value.trim()).filter(Boolean);
+  if(names.length<2){$("err").textContent="Isi minimal dua nama.";return}
+  mode="local";S=newState(names);await save();apply(S,true);show();ui();
+}
+async function startOnline(){
+  code=$("code").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(!code){$("err").textContent="Isi kode ruang. Bebas, asal sama dengan pasanganmu.";return}
+  const nm=$("myn").value.trim()||"Aku";
+  try{
+    ref=db.doc("games/"+code);
+    const sn=await ref.get();let d=sn.exists?sn.data():null;
+    if(!d){d=newState([nm,"Pasangan"]);d.players[0].uid=uid}
+    else{
+      let i=d.players.findIndex(p=>p.uid===uid);
+      if(i<0){i=d.players.findIndex(p=>!p.uid);if(i<0){$("err").textContent="Ruang ini sudah penuh.";return}d.players[i].uid=uid;d.players[i].n=nm}
+    }
+    mode="online";await ref.set(d);await apply(d,true);show();ui();
+    unsub=ref.onSnapshot(s=>{if(s.exists)apply(s.data())},()=>{});
+  }catch(e){$("err").textContent="Gagal terhubung. Pastikan kamu login ke Claude dan sudah diberi akses ke halaman ini."}
+}
+function startP2P(){
+  code=$("code").value.toUpperCase().replace(/[^A-Z0-9]/g,"");
+  if(!code){$("err").textContent="Isi kode ruang. Bebas, asal sama dengan pasanganmu.";return}
+  const nm=$("myn").value.trim()||"Aku",pid="ldrular-"+code.toLowerCase();
+  $("err").textContent="Menghubungkan...";p2p=true;mode="online";linkMsg="";
+  if(peer)try{peer.destroy()}catch(e){}
+  peer=new Peer(pid);
+  peer.on("open",()=>{
+    uid="H";let d=null;
+    try{d=JSON.parse(localStorage.getItem("ldr-p2p-"+code))}catch(e){}
+    if(!d||!d.players||d.players.length<2)d=newState([nm,"Pasangan"]);
+    d.players[0].uid="H";d.players[0].n=nm;d.players[1].uid=null;
+    apply(d,true);show();ui();$("err").textContent="";save();
+  });
+  peer.on("connection",c=>{
+    conn=c;
+    c.on("open",()=>{S.players[1].uid="G";save();ui()});
+    c.on("data",m=>{if(m&&m.hello){S.players[1].n=String(m.hello).slice(0,14);save();ui()}else if(m&&m.players)apply(m)});
+    c.on("close",()=>{conn=null;S.players[1].uid=null;ui()});
+  });
+  peer.on("error",e=>{
+    if(e.type==="unavailable-id")joinGuest(nm,pid);
+    else $("err").textContent="Gagal terhubung ("+e.type+"). Coba lagi atau pakai mode satu layar.";
+  });
+}
+function joinGuest(nm,pid){
+  peer=new Peer();uid="G";
+  peer.on("open",()=>{
+    conn=peer.connect(pid,{serialization:"json",reliable:true});
+    let first=true;
+    conn.on("open",()=>conn.send({hello:nm}));
+    conn.on("data",m=>{if(m&&m.players){if(first){first=false;apply(m,true);show();ui();$("err").textContent=""}else apply(m)}});
+    conn.on("close",()=>{linkMsg="terputus dari tuan rumah, tekan Keluar lalu masuk lagi";if(S)ui()});
+  });
+  peer.on("error",e=>{$("err").textContent=e.type==="peer-unavailable"?"Tuan rumah belum online. Coba lagi sebentar.":"Gagal terhubung ("+e.type+"). Coba lagi atau pakai mode satu layar."});
+}
+function exit(){
+  if(unsub)unsub();unsub=null;if(peer){try{peer.destroy()}catch(e){}peer=null;conn=null;p2p=false;linkMsg=""}$("game").style.display="none";$("home").style.display="grid";
+  $("dlg").open&&$("dlg").close();$("cont").hidden=!localStorage.getItem("ldr-ular");
+}
+
+/* pengaturan */
+function openSet(){
+  const cs=[...new Set(all().map(x=>x[0]))];
+  $("cats").innerHTML=cs.map(c=>`<label class="ck"><input type="checkbox" data-c="${esc(c)}" ${S.cats[c]===false?"":"checked"}>${esc(c)}</label>`).join("");
+  $("cats").querySelectorAll("input").forEach(i=>i.onchange=async()=>{S.cats[i.dataset.c]=i.checked;await save()});
+  $("qn").textContent=(S.extra||[]).length+" pertanyaan buatan kalian";
+  $("theme").innerHTML=Object.keys(THEMES).map(k=>`<option value="${k}"${(S.theme||"hutan")===k?" selected":""}>${THEMES[k].n}</option>`).join("");
+  $("set").showModal();
+}
+
+/* init */
+document.querySelectorAll("input[name=m]").forEach(r=>r.onchange=()=>{
+  const on=r.value==="online"&&r.checked;
+  $("hl").style.display=on?"none":"grid";$("ho").hidden=!on;$("ho").style.display=on?"grid":"none";
+  $("go").textContent=on?"Masuk ruang":"Mulai main";$("err").textContent="";
+});
+$("go").onclick=()=>document.querySelector("input[name=m]:checked").value==="online"?(db&&uid?startOnline():window.Peer?startP2P():$("err").textContent="Mode dua HP belum tersedia di sini. Pakai versi GitHub atau buka lewat claude.ai dalam keadaan login."):startLocal();
+$("cont").onclick=()=>{try{mode="local";S=JSON.parse(localStorage.getItem("ldr-ular"));apply(S,true);show();ui()}catch(e){$("err").textContent="Tidak ada permainan tersimpan."}};
+$("done").onclick=answered;
+$("dlg").addEventListener("cancel",e=>e.preventDefault());
+$("setb").onclick=openSet;$("closeset").onclick=()=>$("set").close();
+$("addq").onclick=async()=>{const t=$("newq").value.trim();if(!t)return;S.extra=(S.extra||[]).concat(t);$("newq").value="";await save();openSet.call&&($("qn").textContent=S.extra.length+" pertanyaan buatan kalian")};
+$("snd").onchange=()=>muted=!$("snd").checked;
+$("theme").onchange=async()=>{S.theme=$("theme").value;await save();draw();ui()};
+let armed=0;
+$("reset").onclick=async()=>{
+  if(!armed){armed=1;$("reset").textContent="Yakin? Tekan lagi";setTimeout(()=>{armed=0;$("reset").textContent="Main ulang"},3000);return}
+  armed=0;$("reset").textContent="Main ulang";await resetGame();
+};
+$("exit").onclick=exit;
+let rt;addEventListener("resize",()=>{clearTimeout(rt);rt=setTimeout(()=>{if(S&&$("game").style.display==="block"&&(innerWidth<700?10:20)!==cols){draw();ui()}},200)});
+try{$("cont").hidden=!localStorage.getItem("ldr-ular")}catch(e){}
+(async()=>{
+  try{
+    if(window.claude&&claude.use){db=await claude.use("db");const u=await claude.use("user");uid=u?await u.id():null}
+  }catch(e){}
+  if(!db||!uid)$("onote").textContent=window.Peer?"Kalian berdua buka link ini di HP masing-masing, masukkan kode ruang yang sama, lalu tekan Masuk ruang. Yang masuk duluan jadi tuan rumah, jadi biarkan halamannya tetap terbuka.":"Mode dua HP butuh login Claude dan akses ke halaman ini. Kalau tombol masuk gagal, pakai mode satu layar.";
+})();
+</script>
+</body>
+</html>
